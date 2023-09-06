@@ -24,6 +24,9 @@ var cursors;
 var score = 0;
 var gameOver = false;
 var scoreText;
+var isAttacking = false;
+console.log(isAttacking);
+
 
 var game = new Phaser.Game(config);
 
@@ -33,7 +36,8 @@ function preload ()
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('soldier', 'assets/soldier2.png', { frameWidth: 65, frameHeight: 48 });
+    this.load.spritesheet('soldier', 'assets/persosprite.png', { frameWidth: 64, frameHeight: 48 });
+    this.load.spritesheet('soldier_attack', 'assets/spriteattack.png', { frameWidth: 64, frameHeight: 48 });
 }
 
 function create ()
@@ -57,130 +61,152 @@ function create ()
     player = this.physics.add.sprite(100, 450, 'soldier'); // les sprites c'est des images avec des animations
 
     //  Player physics properties. Give the little guy a slight bounce.
-    player.setBounce(0.2);
+    player.setBounce(0.1);
     player.setCollideWorldBounds(true);
 
     //  Our player animations, turning, walking left and walking right.
-    // this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
-    //     key: 'left',
-    //     frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 3 }),
-    //     frameRate: 10,
-    //     repeat: -1
-    // });
+    this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 6 }),
+        frameRate: 10,
+        repeat: -1
+    });
 
     this.anims.create({
         key: 'turn',
-        frames: [ { key: 'soldier', frame: 0 } ],
+        frames: [ { key: 'soldier', frame: 7 } ],
         frameRate: 20
     });
 
     this.anims.create({
         key: 'right',
-        frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 4 }),
+        frames: this.anims.generateFrameNumbers('soldier', { start: 8, end: 15 }),
         frameRate: 10,
         repeat: -1
+    });
+
+    this.input.keyboard.on('keydown-E', function () {
+        console.log('test');
+        isAttacking = true;
+    });
+
+    this.input.keyboard.on('keyup-E', function () {
+        console.log('test');
+        isAttacking = false;
+    });
+
+    this.anims.create({
+        key: 'attack',
+        frames: this.anims.generateFrameNumbers('soldier_attack', { start: 0, end: 5 }),
+        frameRate: 10,
+        repeat: 0, // 0 signifie qu'elle ne se répète pas
     });
 
     //  Input Events
     cursors = this.input.keyboard.createCursorKeys();
 
     //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
-    stars = this.physics.add.group({
-        key: 'star',
-        repeat: 11,
-        setXY: { x: 12, y: 0, stepX: 70 }
-    });
+    // stars = this.physics.add.group({
+    //     key: 'star',
+    //     repeat: 11,
+    //     setXY: { x: 12, y: 0, stepX: 70 }
+    // });
 
-    stars.children.iterate(function (child) {
+    // stars.children.iterate(function (child) {
 
-        //  Give each star a slightly different bounce
-        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    //     //  Give each star a slightly different bounce
+    //     child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
 
-    });
+    // });
 
-    bombs = this.physics.add.group();
+    // bombs = this.physics.add.group();
 
     //  The score
     scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 
     //  Collide the player and the stars with the platforms 
     this.physics.add.collider(player, platforms); // ajoute la collision entre le joueur et les plateformes
-    this.physics.add.collider(stars, platforms);
-    this.physics.add.collider(bombs, platforms);
+    // this.physics.add.collider(stars, platforms);
+    // this.physics.add.collider(bombs, platforms);
 
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-    this.physics.add.overlap(player, stars, collectStar, null, this);
+    // this.physics.add.overlap(player, stars, collectStar, null, this);
 
-    this.physics.add.collider(player, bombs, hitBomb, null, this);
+    // this.physics.add.collider(player, bombs, hitBomb, null, this);
 }
 
 function update ()
 {
-    if (gameOver)
-    {
+    if (gameOver){
         return;
     }
 
-    if (cursors.left.isDown)
-    {
+    if (cursors.left.isDown) {
         player.setVelocityX(-160);
-
         player.anims.play('left', true);
-    }
-    else if (cursors.right.isDown)
-    {
+    } else if (cursors.right.isDown) {
         player.setVelocityX(160);
-
         player.anims.play('right', true);
-    }
-    else
-    {
+    } else {
         player.setVelocityX(0);
-
         player.anims.play('turn');
     }
 
-    if (cursors.up.isDown && player.body.touching.down)
-    {
+    if (cursors.up.isDown && player.body.touching.down) {
         player.setVelocityY(-330);
     }
-}
 
-function collectStar (player, star)
-{
-    star.disableBody(true, true);
-
-    //  Add and update the score
-    score += 10;
-    scoreText.setText('Score: ' + score);
-
-    if (stars.countActive(true) === 0)
-    {
-        //  A new batch of stars to collect
-        stars.children.iterate(function (child) {
-
-            child.enableBody(true, child.x, 0, true, true);
-
-        });
-
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-
-        var bomb = bombs.create(x, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        bomb.allowGravity = false;
-
+    if (isAttacking) {
+        console.log(isAttacking);
+    // Jouez l'animation d'attaque
+    player.anims.play('attack', true);
+    } else {
+        // Jouez l'animation de marche normale
+        if (cursors.left.isDown) {
+            player.anims.play('left', true);
+        } else if (cursors.right.isDown) {
+            player.anims.play('right', true);
+        } else {
+            player.anims.play('turn');
+        }
     }
 }
 
-function hitBomb (player, bomb)
-{
-    this.physics.pause();
+// function collectStar (player, star)
+// {
+//     star.disableBody(true, true);
 
-    player.setTint(0xff0000);
+//     //  Add and update the score
+//     score += 10;
+//     scoreText.setText('Score: ' + score);
 
-    player.anims.play('turn');
+//     if (stars.countActive(true) === 0)
+//     {
+//         //  A new batch of stars to collect
+//         stars.children.iterate(function (child) {
 
-    gameOver = true;
-}
+//             child.enableBody(true, child.x, 0, true, true);
+
+//         });
+
+//         var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+//         var bomb = bombs.create(x, 16, 'bomb');
+//         bomb.setBounce(1);
+//         bomb.setCollideWorldBounds(true);
+//         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+//         bomb.allowGravity = false;
+
+//     }
+// }
+
+// function hitBomb (player, bomb)
+// {
+//     this.physics.pause();
+
+//     player.setTint(0xff0000);
+
+//     player.anims.play('turn');
+
+//     gameOver = true;
+// }
