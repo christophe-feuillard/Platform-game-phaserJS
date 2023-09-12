@@ -5,7 +5,7 @@ var config = {
     physics: {
         default: 'arcade', // moteur phyisque le plus simple, le plus léger et le mieux adapter pour des jeux en 2D
         arcade: {
-            gravity: { y: 400 },
+            gravity: { y: 550 },
             debug: false
         }
     },
@@ -23,7 +23,9 @@ var platforms;
 var cursors;
 var score = 0;
 var gameOver = false;
-var scoreText;
+let keyE;
+// var isAttacking = false;
+var currentAnimation = '';
 
 var game = new Phaser.Game(config);
 
@@ -33,33 +35,26 @@ function preload ()
     this.load.image('rockplatform', 'assets/rockplatform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('soldier', 'assets/persosprite.png', { frameWidth: 64, frameHeight: 48 });
-    this.load.spritesheet('soldier_attack', 'assets/spriteattack.png', { frameWidth: 64, frameHeight: 48 });
+    this.load.spritesheet('soldier', 'assets/persosprite2.png', { frameWidth: 64, frameHeight: 48 });
+    this.load.spritesheet('soldier_attack', 'assets/attack_sprite2.png', { frameWidth: 87, frameHeight: 48 });
+    this.load.spritesheet('soldier_jump', 'assets/jump_sprite.png', { frameWidth: 86, frameHeight: 60 });
 }
 
-function create ()
-{
-    //  A simple background for our game
-    this.add.image(400, 300, 'background');
-
-    //  The platforms group contains the ground and the 2 ledges we can jump on
+function create () {
+    this.add.image(400, 300, 'background'); // background
+    keyE = this.input.keyboard.addKey('E');
     platforms = this.physics.add.staticGroup();
-
-    //  Here we create the ground.
-    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-    platforms.create(400, 568, 'rockplatform').setScale(1).refreshBody();
-
-    //  Now let's create some ledges
-    // platforms.create(600, 400, 'rockplatform');
-
-    // The player and its settings
-    player = this.physics.add.sprite(100, 450, 'soldier'); // les sprites c'est des images avec des animations
-
-    //  Player physics properties. Give the little guy a slight bounce.
+    platforms.create(400, 568, 'rockplatform').setScale(1).refreshBody(); // le sol
+    // platforms.create(1000, 510, 'rockplatform'); // autre plateformes
+    player = this.physics.add.sprite(100, 450, 'soldier');
     player.setBounce(0);
     player.setCollideWorldBounds(true);
+    cursors = this.input.keyboard.createCursorKeys();
+    this.physics.add.collider(player, platforms); // ajoute la collision entre le joueur et les plateformes
+    createAnimations.call(this);
+}
 
-    //  Our player animations, turning, walking left and walking right.
+function createAnimations() {
     this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
         key: 'left',
         frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 6 }),
@@ -82,19 +77,17 @@ function create ()
 
     this.anims.create({
         key: 'attack',
-        frames: this.anims.generateFrameNumbers('soldier_attack', { start: 0, end: 5 }),
+        frames: this.anims.generateFrameNumbers('soldier_attack', { start: 0, end: 7 }),
+        frameRate: 10,
+        repeat: 0,
+    });
+
+    this.anims.create({
+        key: 'jump',
+        frames: this.anims.generateFrameNumbers('soldier_jump', { start: 0, end: 10 }),
         frameRate: 10,
         repeat: 0, // 0 signifie qu'elle ne se répète pas
     });
-
-    //  Input Events
-    cursors = this.input.keyboard.createCursorKeys();
-
-    //  The score
-    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-
-    //  Collide the player and the stars with the platforms 
-    this.physics.add.collider(player, platforms); // ajoute la collision entre le joueur et les plateformes
 }
 
 function update ()
@@ -103,18 +96,57 @@ function update ()
         return;
     }
 
-    if (cursors.left.isDown) {
+    // if (cursors.left.isDown) {
+    //     player.setVelocityX(-160);
+    //     player.anims.play('left', true);
+    // } else if (cursors.right.isDown) {
+    //     player.setVelocityX(160);
+    //     player.anims.play('right', true);
+    // } else if(keyE.isDown) {
+    //     player.anims.play('attack', true);
+    // } else if (cursors.up.isDown && player.body.touching.down) {
+    //     player.anims.play('jump', true);
+    //     player.setVelocityY(-250);
+    // } else {
+    //     player.setVelocityX(0);
+    //     player.anims.play('turn');
+    // }
+
+    if (cursors.left.isDown) { // left
         player.setVelocityX(-160);
         player.anims.play('left', true);
-    } else if (cursors.right.isDown) {
+        currentAnimation = 'left';
+    } else if (cursors.right.isDown) { // right
         player.setVelocityX(160);
         player.anims.play('right', true);
-    } else {
+        currentAnimation = 'right';
+    } else if (keyE.isDown) { // attack
+        // isAttacking = true;
+        player.anims.play('attack', true);
+        currentAnimation = 'attack';
+        // player.once('animationcomplete', function () {
+        //     isAttacking = false;
+        // });
+    } else if (cursors.up.isDown) { // jump
+        if(player.body.touching.down) {
+            player.anims.play('jump', true);
+            player.setVelocityY(-250);
+            currentAnimation = 'jump';
+        }
+        console.log(player.body.touching.down);
+    } else { // rien
         player.setVelocityX(0);
-        player.anims.play('turn');
-    }
-
-    if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-250);
+        // player.anims.play('turn');
+        // player.setVelocityX(0);
+        if (currentAnimation === 'attack' || currentAnimation === 'jump') {
+            // Si l'animation précédente était une attaque, la laisser se terminer
+            player.once('animationcomplete', function () {
+                player.anims.play('turn');
+                currentAnimation = 'turn'; // Mettre à jour l'animation actuelle
+            });
+        } else {
+            player.anims.play('turn');
+            currentAnimation = 'turn'; // Mettre à jour l'animation actuelle
+        }
     }
 }
