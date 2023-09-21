@@ -172,13 +172,13 @@ function update ()
         return;
     }
 
-    if (keyE.isDown) { // attack
+    if (keyE.isDown && !cursors.left.isDown && !cursors.right.isDown) { // attack
         simulateSwordAttack();
-    } else if (cursors.left.isDown) { // left
+    } else if (cursors.left.isDown && !keyE.isDown) { // left
         player.setVelocityX(-160);
         player.anims.play('left', true);
         currentAnimation = 'left';
-    } else if (cursors.right.isDown) { // right
+    } else if (cursors.right.isDown && !keyE.isDown) { // right
         player.setVelocityX(160);
         player.anims.play('right', true);
         currentAnimation = 'right';
@@ -195,41 +195,13 @@ function update ()
         }
     }
 
-    if (cursors.up.isDown && player.body.onFloor()) { // jump si le joueur est sur le sol
+    if (cursors.up.isDown && player.body.onFloor() && !cursors.right.isDown && !cursors.left.isDown) { // jump si le joueur est sur le sol
         player.setVelocityY(-300);
         player.anims.play('jump', true);
         currentAnimation = 'jump';
+    } else if (cursors.up.isDown && player.body.onFloor() && (cursors.right.isDown || cursors.left.isDown)) {
+        player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche
     }
-
-    // if (cursors.left.isDown) { // left
-    //     player.setVelocityX(-160);
-    //     player.anims.play('left', true);
-    //     currentAnimation = 'left';
-    // } else if (cursors.right.isDown) { // right
-    //     player.setVelocityX(160);
-    //     player.anims.play('right', true);
-    //     currentAnimation = 'right';
-    // } 
-    // else if (cursors.up.isDown && player.body.onFloor()) { // jump
-    //     player.anims.play('jump', true);
-    //     player.setVelocityY(-250);
-    //     currentAnimation = 'jump';
-    // }
-    // if (keyE.isDown) { // attack
-    //     player.anims.play('attack', true);
-    //     currentAnimation = 'attack';
-    // } else { // rien
-    //     player.setVelocityX(0);
-    //     if (currentAnimation === 'attack' || currentAnimation === 'jump') { // je laisse l'animation précédente se terminer
-    //         player.once('animationcomplete', function () {
-    //             player.anims.play('turn');
-    //             currentAnimation = 'turn'; // met à jour l'animation actuelle
-    //         });
-    //     } else {
-    //         player.anims.play('turn');
-    //         currentAnimation = 'turn';
-    //     }
-    // }
 
     if(enemy.active) { // Logique de suivi de l'ennemi
         if (player.x < enemy.x) {
@@ -253,9 +225,7 @@ function update ()
 function playerEnemyCollision(player, enemy) {
     // Définissez ici la logique des interactions entre le joueur et l'ennemi en cas de collision.
     // Par exemple, vous pouvez réduire la santé du joueur ou détruire l'ennemi.
-
-    // Exemple : Réduire la santé du joueur
-    pv -= 5; // Assurez-vous que playerHealth est une variable définie pour la santé du joueur
+    pv -= 5;
     healthText.setText('PV: ' + pv);
 
     if (healthText.text == "PV: 0"){
