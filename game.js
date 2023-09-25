@@ -30,13 +30,17 @@ var gameOverText = '';
 var attackDamage = 50;
 var enemyHealth = 100;
 var isAttacking = false;
-var plateformes
+var plateformes;
+var playerSpeed = 140;
+var speedText = '';
 
 var game = new Phaser.Game(config);
 
 function preload ()
 {
     this.load.image("Phaser_tuilesdejeu", "assets/tuilesperso2.png");
+    this.load.image('boots', 'assets/boots.png');
+    this.load.image('potion', 'assets/potion.png');
     this.load.tilemapTiledJSON("carte", "assets/map2.json");  
     this.load.spritesheet('soldier', 'assets/persosprite2.png', { frameWidth: 64, frameHeight: 48 });
     this.load.spritesheet('soldier_attack', 'assets/attack_sprite2.png', { frameWidth: 87, frameHeight: 48 });
@@ -65,10 +69,10 @@ function create () {
     );
 
     groupe_ennemis = this.physics.add.group();
+    const groupeBottes = this.physics.add.group();
 
     const tab_points = carteDuNiveau.getObjectLayer("calque_ennemis");   
-    const items = carteDuNiveau.getObjectLayer("calque_ennemis");   
-    console.log(items)
+    const tab_items = carteDuNiveau.getObjectLayer("calque_item");   
 
     tab_points.objects.forEach(point => {
         if (point.name == "ennemi") {
@@ -81,10 +85,24 @@ function create () {
     }); 
 
     player = this.physics.add.sprite(100, 440, 'soldier');
+    // player = this.physics.add.sprite(3000, 40, 'soldier');
     player.setBounce(0);
     player.setCollideWorldBounds(true);
     player.body.onWorldBounds = true; 
-    console.log(player)
+
+    tab_items.objects.forEach(item => {
+        if (item.name === "boots") {
+            const boots = this.physics.add.sprite(item.x, item.y, "boots");
+            boots.setScale(0.02)
+            this.physics.add.collider(boots, plateformes);
+            this.physics.add.overlap(player, boots, collectBoots, null, this);
+        } else if (item.name === "potion") {
+            const potion = this.physics.add.sprite(item.x, item.y, "potion");
+            potion.setScale(0.02)
+            this.physics.add.collider(potion, plateformes);
+            this.physics.add.overlap(player, potion, collectpotion, null, this);
+        }
+    });
     
     plateformes.setCollisionByProperty({ collides: true });
     plateformes.setCollisionByExclusion([-1]);
@@ -98,12 +116,16 @@ function create () {
     keyE = this.input.keyboard.addKey('E');
     cursors = this.input.keyboard.createCursorKeys();
 
-    healthText = this.add.text(16, 16, `PV: 100`, { fontSize: '32px', fill: '#FFFFFF' });
+    healthText = this.add.text(16, 16, `PV: ${pv}`, { fontSize: '25px', fill: '#FFFFFF' });
     healthText.setScrollFactor(0); // fixe le texte à l'écran
 
     gameOverText = this.add.text(370, 300, `TES DEAD`, { fontSize: '32px', fill: '#FFFFFF' });
     gameOverText.setAlpha(0); // Masque le texte en le rendant transparent
     gameOverText.setScrollFactor(0);
+
+    speedText = this.add.text(100, 100, '', { fontSize: '24px', fill: '#FFFFFF' });
+    speedText.setAlpha(0);
+    speedText.setScrollFactor(0);
 
     player.body.world.on(  // écouteur sur les bords du monde
         "worldbounds", // l'event surveillé
@@ -126,7 +148,6 @@ function create () {
         un_ennemi.direction = "gauche";
         un_ennemi.play("enemy_walk", true);
     }); 
-    console.log(groupe_ennemis.children.entries)
 }
 
 function createAnimations() {
@@ -196,11 +217,11 @@ function update ()
     if (keyE.isDown && !cursors.left.isDown && !cursors.right.isDown) { // attack
         simulateSwordAttack();
     } else if (cursors.left.isDown && !keyE.isDown) { // left
-        player.setVelocityX(-140);
+        player.setVelocityX(-playerSpeed);
         player.anims.play('left', true);
         currentAnimation = 'left';
     } else if (cursors.right.isDown && !keyE.isDown) { // right
-        player.setVelocityX(140);
+        player.setVelocityX(playerSpeed);
         player.anims.play('right', true);
         currentAnimation = 'right';
     } else { // Si aucune touche de déplacement n'est enfoncée
@@ -217,14 +238,13 @@ function update ()
     }
 
     if (cursors.up.isDown && player.body.onFloor() && !cursors.right.isDown && !cursors.left.isDown) { // jump si le joueur est sur le sol
-        player.setVelocityY(-350);
+        player.setVelocityY(-330);
         player.anims.play('jump', true);
         currentAnimation = 'jump';
     } else if (cursors.up.isDown && player.body.onFloor() && (cursors.right.isDown || cursors.left.isDown)) {
-        player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche
+        player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche et il saute un peu moins haut
     }
     
-    // console.log(groupe_ennemis.children)
     // groupe_ennemis.children.iterate(function iterateur(enemy) {
     //     if(enemy.active) { // Logique de suivi de l'ennemi
     //         if (player.x < enemy.x) {
@@ -248,7 +268,6 @@ function update ()
     groupe_ennemis.children.iterate(function iterateur(un_ennemi) {
         if (un_ennemi.direction == "gauche" && un_ennemi.body.blocked.down) {
         var coords = un_ennemi.getBottomLeft();
-        // console.log(plateformes);
         var tuileSuivante = plateformes.getTileAtWorldXY(
             coords.x,
             coords.y + 10
@@ -260,22 +279,22 @@ function update ()
             un_ennemi.play("enemy_walk", true);
         }
         } else if (un_ennemi.direction == "droite" && un_ennemi.body.blocked.down) {
-        var coords = un_ennemi.getBottomRight();
-        var tuileSuivante = plateformes.getTileAtWorldXY(
-            coords.x,
-            coords.y + 10
-        );
-        if (tuileSuivante == null || un_ennemi.body.blocked.right) {
-            // on risque de marcher dans le vide, on tourne
-            un_ennemi.direction = "gauche";
-            un_ennemi.setVelocityX(-80);
-            un_ennemi.play("enemy_walk", true);
-        }
+            var coords = un_ennemi.getBottomRight();
+            var tuileSuivante = plateformes.getTileAtWorldXY(
+                coords.x,
+                coords.y + 10
+            );
+            if (tuileSuivante == null || un_ennemi.body.blocked.right) {
+                // on risque de marcher dans le vide, on tourne
+                un_ennemi.direction = "gauche";
+                un_ennemi.setVelocityX(-80);
+                un_ennemi.play("enemy_walk", true);
+            }
         }
     });
 }
 
-function playerEnemyCollision(player, enemy) {
+function playerEnemyCollision() {
     // Définissez ici la logique des interactions entre le joueur et l'ennemi en cas de collision.
     // Par exemple, vous pouvez réduire la santé du joueur ou détruire l'ennemi.
     pv -= 1;
@@ -309,4 +328,45 @@ function dealDamageToEnemy(enemy) {
     if (enemyHealth <= 0) {
         enemy.destroy(); 
     }
+}
+
+function collectBoots(player, boots) {
+    speedText.setText('+20 Move Speed!');
+    speedText.setAlpha(1);
+    this.tweens.add({
+        targets: speedText,
+        alpha: 0, // Le texte deviendra progressivement transparent
+        y: speedText.y - 70, // Animation de montée
+        duration: 2000, // Durée de l'animation en millisecondes (2 secondes)
+        ease: 'Linear',
+        onComplete: function () {
+            speedText.setText(''); // Effacez le texte lorsque l'animation est terminée
+        }
+    });
+    playerSpeed = playerSpeed + 20;
+    boots.destroy(); 
+}
+
+function collectpotion(player, potion) {
+    speedText.setText('+20 PV!');
+    speedText.setAlpha(1);
+    this.tweens.add({
+        targets: speedText,
+        alpha: 0, 
+        y: speedText.y - 70, 
+        duration: 2000, 
+        ease: 'Linear',
+        onComplete: function () {
+            speedText.setText('');
+        }
+    });
+
+    pv = pv + 20;
+    potion.destroy(); 
+    updateHealthText();
+}
+
+function updateHealthText() {
+    healthText.setText(`PV: ${pv}`);
+    // healthText.setText('PV: ' +  (pv + health)); // Mettez à jour le texte avec la nouvelle valeur des PV
 }
