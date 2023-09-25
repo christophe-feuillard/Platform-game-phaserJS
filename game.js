@@ -17,8 +17,9 @@ var config = {
 };
 
 var player;
-var enemy;
+// var enemy;
 var cursors;
+var groupe_ennemis;
 var score = 0;
 var gameOver = false;
 let keyE;
@@ -29,6 +30,7 @@ var gameOverText = '';
 var attackDamage = 50;
 var enemyHealth = 100;
 var isAttacking = false;
+var plateformes
 
 var game = new Phaser.Game(config);
 
@@ -57,19 +59,32 @@ function create () {
         "background_2",
         tileset
     );
-    const plateformes = carteDuNiveau.createStaticLayer(
+    plateformes = carteDuNiveau.createStaticLayer(
         "plateformes",
         tileset
     );
 
-    player = this.physics.add.sprite(100, 450, 'soldier');
+    groupe_ennemis = this.physics.add.group();
+
+    const tab_points = carteDuNiveau.getObjectLayer("calque_ennemis");   
+    const items = carteDuNiveau.getObjectLayer("calque_ennemis");   
+    console.log(items)
+
+    tab_points.objects.forEach(point => {
+        if (point.name == "ennemi") {
+        var nouvel_ennemi = this.physics.add.sprite(point.x, point.y, "enemy");
+        nouvel_ennemi.setBounce(0);
+        nouvel_ennemi.setCollideWorldBounds(true);
+        this.physics.add.collider(nouvel_ennemi, plateformes);
+        groupe_ennemis.add(nouvel_ennemi);
+        }
+    }); 
+
+    player = this.physics.add.sprite(100, 440, 'soldier');
     player.setBounce(0);
     player.setCollideWorldBounds(true);
     player.body.onWorldBounds = true; 
-    
-    enemy = this.physics.add.sprite(400, 450, 'enemy');
-    enemy.setBounce(0);
-    enemy.setCollideWorldBounds(true);
+    console.log(player)
     
     plateformes.setCollisionByProperty({ collides: true });
     plateformes.setCollisionByExclusion([-1]);
@@ -79,8 +94,6 @@ function create () {
     this.cameras.main.startFollow(player); // ancrage de la caméra sur le joueur
 
     this.physics.add.collider(player, plateformes);
-    this.physics.add.collider(enemy, plateformes);
-    // this.physics.add.collider(enemy, player);
 
     keyE = this.input.keyboard.addKey('E');
     cursors = this.input.keyboard.createCursorKeys();
@@ -98,6 +111,7 @@ function create () {
         // on verifie si la hitbox qui est rentrée en collision est celle du player,
         // et si la collision a eu lieu sur le bord inférieur du player
         if (body.gameObject === player && down == true) {
+            this.physics.pause();
             healthText.setAlpha(0);
             gameOver = true;
         }
@@ -106,6 +120,13 @@ function create () {
     ); 
 
     createAnimations.call(this);
+
+    groupe_ennemis.children.iterate(function iterateur(un_ennemi) {
+        un_ennemi.setVelocityX(-80);
+        un_ennemi.direction = "gauche";
+        un_ennemi.play("enemy_walk", true);
+    }); 
+    console.log(groupe_ennemis.children.entries)
 }
 
 function createAnimations() {
@@ -175,11 +196,11 @@ function update ()
     if (keyE.isDown && !cursors.left.isDown && !cursors.right.isDown) { // attack
         simulateSwordAttack();
     } else if (cursors.left.isDown && !keyE.isDown) { // left
-        player.setVelocityX(-160);
+        player.setVelocityX(-140);
         player.anims.play('left', true);
         currentAnimation = 'left';
     } else if (cursors.right.isDown && !keyE.isDown) { // right
-        player.setVelocityX(160);
+        player.setVelocityX(140);
         player.anims.play('right', true);
         currentAnimation = 'right';
     } else { // Si aucune touche de déplacement n'est enfoncée
@@ -196,39 +217,72 @@ function update ()
     }
 
     if (cursors.up.isDown && player.body.onFloor() && !cursors.right.isDown && !cursors.left.isDown) { // jump si le joueur est sur le sol
-        player.setVelocityY(-300);
+        player.setVelocityY(-350);
         player.anims.play('jump', true);
         currentAnimation = 'jump';
     } else if (cursors.up.isDown && player.body.onFloor() && (cursors.right.isDown || cursors.left.isDown)) {
         player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche
     }
+    
+    // console.log(groupe_ennemis.children)
+    // groupe_ennemis.children.iterate(function iterateur(enemy) {
+    //     if(enemy.active) { // Logique de suivi de l'ennemi
+    //         if (player.x < enemy.x) {
+    //             // Le joueur est à gauche de l'ennemi, faites en sorte que l'ennemi se déplace vers la gauche
+    //             enemy.setVelocityX(-80); // Ajustez la vitesse de l'ennemi selon vos besoins
+    //             enemy.anims.play('enemy_walk', true);
+    //         } else if (player.x > enemy.x) {
+    //             // Le joueur est à droite de l'ennemi, faites en sorte que l'ennemi se déplace vers la droite
+    //             enemy.setVelocityX(80); // Ajustez la vitesse de l'ennemi selon vos besoins
+    //             enemy.anims.play('enemy_walk', true);
+    //         } else {
+    //             // Le joueur est à la même position horizontale que l'ennemi, arrêtez son mouvement
+    //             enemy.setVelocityX(0);
+    //             enemy.anims.stop('enemy_walk');
+    //         }
+    //     }
+    // }); 
 
-    if(enemy.active) { // Logique de suivi de l'ennemi
-        if (player.x < enemy.x) {
-            // Le joueur est à gauche de l'ennemi, faites en sorte que l'ennemi se déplace vers la gauche
-            enemy.setVelocityX(-100); // Ajustez la vitesse de l'ennemi selon vos besoins
-            enemy.anims.play('enemy_walk', true);
-        } else if (player.x > enemy.x) {
-            // Le joueur est à droite de l'ennemi, faites en sorte que l'ennemi se déplace vers la droite
-            enemy.setVelocityX(100); // Ajustez la vitesse de l'ennemi selon vos besoins
-            enemy.anims.play('enemy_walk', true);
-        } else {
-            // Le joueur est à la même position horizontale que l'ennemi, arrêtez son mouvement
-            enemy.setVelocityX(0);
-            enemy.anims.stop('enemy_walk');
+    this.physics.collide(player, groupe_ennemis.children.entries, playerEnemyCollision, null, this);
+
+    groupe_ennemis.children.iterate(function iterateur(un_ennemi) {
+        if (un_ennemi.direction == "gauche" && un_ennemi.body.blocked.down) {
+        var coords = un_ennemi.getBottomLeft();
+        // console.log(plateformes);
+        var tuileSuivante = plateformes.getTileAtWorldXY(
+            coords.x,
+            coords.y + 10
+        );
+        if (tuileSuivante == null || un_ennemi.body.blocked.left) {
+            // on risque de marcher dans le vide, on tourne
+            un_ennemi.direction = "droite";
+            un_ennemi.setVelocityX(80);
+            un_ennemi.play("enemy_walk", true);
         }
-    }
-
-    this.physics.collide(player, enemy, playerEnemyCollision, null, this);
+        } else if (un_ennemi.direction == "droite" && un_ennemi.body.blocked.down) {
+        var coords = un_ennemi.getBottomRight();
+        var tuileSuivante = plateformes.getTileAtWorldXY(
+            coords.x,
+            coords.y + 10
+        );
+        if (tuileSuivante == null || un_ennemi.body.blocked.right) {
+            // on risque de marcher dans le vide, on tourne
+            un_ennemi.direction = "gauche";
+            un_ennemi.setVelocityX(-80);
+            un_ennemi.play("enemy_walk", true);
+        }
+        }
+    });
 }
 
 function playerEnemyCollision(player, enemy) {
     // Définissez ici la logique des interactions entre le joueur et l'ennemi en cas de collision.
     // Par exemple, vous pouvez réduire la santé du joueur ou détruire l'ennemi.
-    pv -= 5;
+    pv -= 1;
     healthText.setText('PV: ' + pv);
 
     if (healthText.text == "PV: 0"){
+        this.physics.pause();
         gameOver = true;
     }
 }
@@ -236,14 +290,16 @@ function playerEnemyCollision(player, enemy) {
 function simulateSwordAttack() {
     player.anims.play('attack', true);
     currentAnimation = 'attack';
-    const attackRange = new Phaser.Geom.Rectangle(player.x - 50, player.y - 10, 100, 20); // portée de l'attaque
+    const attackRange = new Phaser.Geom.Rectangle(player.x - 50, player.y - 10, 120, 20); // portée de l'attaque
 
     // Parcourez tous les ennemis de votre jeu (si vous en avez plusieurs)
     // et vérifiez s'ils se trouvent dans la zone d'attaque
     player.once('animationcomplete', function () {
-        if (enemy && Phaser.Geom.Rectangle.ContainsPoint(attackRange, enemy.getCenter())) {
-            dealDamageToEnemy(enemy);
-        }
+        groupe_ennemis.children.entries.forEach(enemy => {
+            if (Phaser.Geom.Rectangle.ContainsPoint(attackRange, enemy.getCenter())) {
+                dealDamageToEnemy(enemy);
+            }
+        });
     });
 }
 
