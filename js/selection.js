@@ -1,9 +1,8 @@
 var player;
 var cursors;
-var groupe_ennemis;
 var score = 0;
 var gameOver = false;
-let keyE;
+var keyE;
 var currentAnimation = '';
 var pv = 100;
 var healthText;
@@ -14,6 +13,8 @@ var isAttacking = false;
 var plateforme;
 var playerSpeed = 140;
 var speedText = '';
+var plateformes;
+var groupe_ennemis;
 
 export default class selection extends Phaser.Scene {
     constructor() {
@@ -21,10 +22,16 @@ export default class selection extends Phaser.Scene {
     }
 
     preload () {
-        this.load.image("Phaser_tuilesdejeu_selection", "assets/tuilesperso2.png");
+        this.load.image("Phaser_tuilesdejeu", "assets/tuilesperso2.png");
         this.load.image('boots', 'assets/boots.png');
         this.load.image('potion', 'assets/potion.png');
-        this.load.tilemapTiledJSON("mapSelection", "assets/mapSelection.json");  
+        this.load.image('img_porte1', 'assets2/door1.png');
+        // this.load.image('img_porte2', 'assets2/door2.png');
+        // this.load.image('img_porte3', 'assets2/door3.png'); 
+
+        this.load.tilemapTiledJSON("mapSelection", "assets/mapSelection.json");
+        this.load.tilemapTiledJSON("niveau1_1", "assets/map2.json"); 
+
         this.load.spritesheet('soldier', 'assets/persosprite2.png', { frameWidth: 64, frameHeight: 48 });
         this.load.spritesheet('soldier_attack', 'assets/attack_sprite2.png', { frameWidth: 87, frameHeight: 48 });
         this.load.spritesheet('soldier_jump', 'assets/jump_sprite.png', { frameWidth: 86, frameHeight: 60 });
@@ -35,7 +42,7 @@ export default class selection extends Phaser.Scene {
         const mapSelection = this.add.tilemap("mapSelection");
         const tileset = mapSelection.addTilesetImage(
             "tuiles_selection_level",
-            "Phaser_tuilesdejeu_selection"
+            "Phaser_tuilesdejeu"
         );  
 
         const background = mapSelection.createStaticLayer(
@@ -46,6 +53,8 @@ export default class selection extends Phaser.Scene {
             "plateforme",
             tileset
         );
+
+        this.porte1 = this.physics.add.staticSprite(150, 430, "img_porte1");
 
         player = this.physics.add.sprite(0, 340, 'soldier');
         player.setBounce(0);
@@ -61,16 +70,11 @@ export default class selection extends Phaser.Scene {
 
         this.physics.add.collider(player, plateforme);
 
-        keyE = this.input.keyboard.addKey('E');
-        cursors = this.input.keyboard.createCursorKeys();
+        this.cursors = this.input.keyboard.createCursorKeys();
 
         healthText = this.add.text(16, 16, `PV: ${pv}`, { fontSize: '25px', fill: '#FFFFFF' });
         healthText.setScrollFactor(0); // fixe le texte à l'écran
 
-        this.createAnimations.call(this); // rajouter un this.createAnimations
-    }
-
-    createAnimations() {
         this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
             key: 'left',
             frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 6 }),
@@ -120,11 +124,15 @@ export default class selection extends Phaser.Scene {
     }
 
     update () {
-        if (cursors.left.isDown && !keyE.isDown) { // left
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.space) == true) {
+            if (this.physics.overlap(player, this.porte1)) this.scene.start("niveau1");
+        } 
+
+        if (this.cursors.left.isDown) { // left
             player.setVelocityX(-playerSpeed);
             player.anims.play('left', true);
             currentAnimation = 'left';
-        } else if (cursors.right.isDown && !keyE.isDown) { // right
+        } else if (this.cursors.right.isDown) { // right
             player.setVelocityX(playerSpeed);
             player.anims.play('right', true);
             currentAnimation = 'right';
@@ -141,22 +149,34 @@ export default class selection extends Phaser.Scene {
             }
         }
 
-        if (cursors.up.isDown && player.body.onFloor() && !cursors.right.isDown && !cursors.left.isDown) { // jump si le joueur est sur le sol
+        if (this.cursors.up.isDown && player.body.onFloor() && !this.cursors.right.isDown && !this.cursors.left.isDown) { // jump si le joueur est sur le sol
             player.setVelocityY(-330);
             player.anims.play('jump', true);
             currentAnimation = 'jump';
-        } else if (cursors.up.isDown && player.body.onFloor() && (cursors.right.isDown || cursors.left.isDown)) {
+        } else if (this.cursors.up.isDown && player.body.onFloor() && (this.cursors.right.isDown || this.cursors.left.isDown)) {
             player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche et il saute un peu moins haut
         }
     }
 }
 
 var config = { // configuration générale du jeu
+    // type: Phaser.AUTO,
+    // width: 900,
+    // height: 600,
+    // physics: {
+    //     default: 'arcade',
+    //     arcade: {
+    //         gravity: { y: 550 },
+    //         debug: false
+    //     }
+    // },
     scene: {selection}
 };
 
 var game = new Phaser.Game(config); // création et lancement du jeu à partir de la configuration config
 game.scene.start("selection"); // lancement de la scene selection
+
+
 
 
 

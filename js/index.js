@@ -3,7 +3,7 @@ import niveau1 from "./niveau1.js";
 
 var config = {
   type: Phaser.AUTO,
-  width: 900,
+  width: 800,
   height: 600,
   physics: {
       default: 'arcade',
@@ -28,6 +28,10 @@ var config = {
 var game = new Phaser.Game(config);
 game.scene.start("selection"); 
  
+
+
+
+
 
 
 // var config = {
