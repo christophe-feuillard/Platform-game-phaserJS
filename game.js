@@ -1,3 +1,5 @@
+// import selection from "./js/selection.js"; 
+
 var config = {
     type: Phaser.AUTO,
     width: 900,
@@ -368,5 +370,4 @@ function collectpotion(player, potion) {
 
 function updateHealthText() {
     healthText.setText(`PV: ${pv}`);
-    // healthText.setText('PV: ' +  (pv + health)); // Mettez à jour le texte avec la nouvelle valeur des PV
 }
