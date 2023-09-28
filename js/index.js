@@ -3,15 +3,25 @@ import niveau1 from "./niveau1.js";
 
 var config = {
   type: Phaser.AUTO,
-  width: 800,
+  width: 900,
   height: 600,
   physics: {
       default: 'arcade',
       arcade: {
-          gravity: { y: 300 },
+          gravity: { y: 550 },
           debug: false
       }
   },
+  // type: Phaser.AUTO,
+  // width: 800,
+  // height: 600,
+  // physics: {
+  //     default: 'arcade',
+  //     arcade: {
+  //         gravity: { y: 300 },
+  //         debug: false
+  //     }
+  // },
   scene : [selection, niveau1]
 };
 
