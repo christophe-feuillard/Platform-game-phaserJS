@@ -62,7 +62,7 @@ export default class niveau1 extends Phaser.Scene {
 
       this.player = this.physics.add.sprite(100, 440, 'soldier');
       //   this.player.refreshBody();
-      // player = this.physics.add.sprite(3000, 40, 'soldier');
+    //   this.player = this.physics.add.sprite(3000, 40, 'soldier');
       this.player.setBounce(0);
       this.player.setCollideWorldBounds(true);
       this.player.body.onWorldBounds = true; 
@@ -95,6 +95,9 @@ export default class niveau1 extends Phaser.Scene {
 
       this.pv = 100;
       this.playerSpeed = 140;
+      this.enemyHealth = 100;
+      this.attackDamage = 50;
+
       this.healthText = this.add.text(16, 16, `PV: ${this.pv}`, { fontSize: '25px', fill: '#FFFFFF' });
       this.healthText.setScrollFactor(0); // fixe le texte à l'écran
 
@@ -105,7 +108,6 @@ export default class niveau1 extends Phaser.Scene {
       this.speedText = this.add.text(100, 100, '', { fontSize: '24px', fill: '#FFFFFF' });
       this.speedText.setAlpha(0);
       this.speedText.setScrollFactor(0);
-      console.log(this.playerSpeed)
 
       this.player.body.world.on(  // écouteur sur les bords du monde
           "worldbounds", // l'event surveillé
@@ -152,7 +154,6 @@ export default class niveau1 extends Phaser.Scene {
         this.player.anims.play('left', true);
         this.currentAnimation = 'left';
     } else if (this.cursors.right.isDown && !this.keyE.isDown) { // right
-        console.log(this.playerSpeed)
         this.player.setVelocityX(this.playerSpeed);
         this.player.anims.play('right', true);
         this.currentAnimation = 'right';
@@ -179,7 +180,7 @@ export default class niveau1 extends Phaser.Scene {
 
     this.physics.collide(this.player, this.groupe_ennemis.children.entries, this.playerEnemyCollision, null, this);
 
-    this.groupe_ennemis.children.iterate(function iterateur(un_ennemi) {
+    this.groupe_ennemis.children.iterate(function iterateur(un_ennemi) { // deplacement ennemis
         if (un_ennemi.direction == "gauche" && un_ennemi.body.blocked.down) {
         var coords = un_ennemi.getBottomLeft();
         var tuileSuivante = self.plateformes.getTileAtWorldXY(
@@ -210,14 +211,22 @@ export default class niveau1 extends Phaser.Scene {
   }
 
   playerEnemyCollision() {
-      this.pv -= 1;
-      this.healthText.setText('PV: ' + pv);
+      this.pv -= 2;
+      this.healthText.setText('PV: ' + this.pv);
 
       if (this.healthText.text == "PV: 0"){
           this.physics.pause();
-          gameOver = true;
+          this.gameOver = true;
       }
   }
+
+    dealDamageToEnemy(enemy) {
+      this.enemyHealth -= this.attackDamage;
+
+        if (this.enemyHealth <= 0) {
+            enemy.destroy(); 
+        }
+    }
 
   simulateSwordAttack() {
     const self = this;
@@ -228,31 +237,24 @@ export default class niveau1 extends Phaser.Scene {
     this.player.once('animationcomplete', function () {
         self.groupe_ennemis.children.entries.forEach(enemy => {
             if (Phaser.Geom.Rectangle.ContainsPoint(attackRange, enemy.getCenter())) {
-                dealDamageToEnemy(enemy);
+                self.dealDamageToEnemy(enemy);
             }
         });
     });
   }
 
-  dealDamageToEnemy(enemy) {
-      enemyHealth -= attackDamage;
-
-      if (enemyHealth <= 0) {
-          enemy.destroy(); 
-      }
-  }
-
   collectBoots(player, boots) {
-      speedText.setText('+20 Move Speed!');
-      speedText.setAlpha(1);
+    const self = this;
+      this.speedText.setText('+20 Move Speed!');
+      this.speedText.setAlpha(1);
       this.tweens.add({
-          targets: speedText,
+          targets: this.speedText,
           alpha: 0, // Le texte deviendra progressivement transparent
-          y: speedText.y - 70, // Animation de montée
+          y: this.speedText.y - 70, // Animation de montée
           duration: 2000, // Durée de l'animation en millisecondes (2 secondes)
           ease: 'Linear',
           onComplete: function () {
-              speedText.setText(''); // Effacez le texte lorsque l'animation est terminée
+              self.speedText.setText(''); // Effacez le texte lorsque l'animation est terminée
           }
       });
       this.playerSpeed = this.playerSpeed + 20;
@@ -260,26 +262,27 @@ export default class niveau1 extends Phaser.Scene {
   }
 
   collectpotion(player, potion) {
-      speedText.setText('+20 PV!');
-      speedText.setAlpha(1);
+    const self = this;
+      this.speedText.setText('+20 PV!');
+      this.speedText.setAlpha(1);
       this.tweens.add({
-          targets: speedText,
+          targets: this.speedText,
           alpha: 0, 
-          y: speedText.y - 70, 
+          y: this.speedText.y - 70, 
           duration: 2000, 
           ease: 'Linear',
           onComplete: function () {
-              speedText.setText('');
+              self.speedText.setText('');
           }
       });
 
-      pv = pv + 20;
+      this.pv = this.pv + 20;
       potion.destroy(); 
-      updateHealthText();
+      this.updateHealthText();
   }
 
   updateHealthText() {
-      this.healthText.setText(`PV: ${pv}`);
+      this.healthText.setText(`PV: ${this.pv}`);
   }
 
 }
