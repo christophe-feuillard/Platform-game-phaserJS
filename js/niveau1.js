@@ -6,9 +6,7 @@ export default class niveau1 extends Phaser.Scene {
     });
   }
 
-  preload() {
-    // this.load.tilemapTiledJSON("niveau1_1", "assets/map2.json"); 
-  }
+  preload() {}
 
   create () {
       //     this.add.image(400, 300, "sky");
@@ -46,10 +44,8 @@ export default class niveau1 extends Phaser.Scene {
           "plateformes",
           tileset
       );
-      console.log(this.plateformes)
 
       this.groupe_ennemis = this.physics.add.group();
-      console.log(this.groupe_ennemis)
 
       const tab_points = carteDuNiveau.getObjectLayer("calque_ennemis");   
       const tab_items = carteDuNiveau.getObjectLayer("calque_item");   
@@ -65,6 +61,7 @@ export default class niveau1 extends Phaser.Scene {
       }); 
 
       this.player = this.physics.add.sprite(100, 440, 'soldier');
+      //   this.player.refreshBody();
       // player = this.physics.add.sprite(3000, 40, 'soldier');
       this.player.setBounce(0);
       this.player.setCollideWorldBounds(true);
@@ -96,6 +93,8 @@ export default class niveau1 extends Phaser.Scene {
       this.keyE = this.input.keyboard.addKey('E');
       this.cursors = this.input.keyboard.createCursorKeys();
 
+      this.pv = 100;
+      this.playerSpeed = 140;
       this.healthText = this.add.text(16, 16, `PV: ${this.pv}`, { fontSize: '25px', fill: '#FFFFFF' });
       this.healthText.setScrollFactor(0); // fixe le texte à l'écran
 
@@ -106,6 +105,7 @@ export default class niveau1 extends Phaser.Scene {
       this.speedText = this.add.text(100, 100, '', { fontSize: '24px', fill: '#FFFFFF' });
       this.speedText.setAlpha(0);
       this.speedText.setScrollFactor(0);
+      console.log(this.playerSpeed)
 
       this.player.body.world.on(  // écouteur sur les bords du monde
           "worldbounds", // l'event surveillé
@@ -114,7 +114,7 @@ export default class niveau1 extends Phaser.Scene {
           // et si la collision a eu lieu sur le bord inférieur du player
           if (body.gameObject === this.player && down == true) {
               this.physics.pause();
-              healthText.setAlpha(0);
+              this.healthText.setAlpha(0);
               this.gameOver = true;
           }
           },
@@ -146,20 +146,21 @@ export default class niveau1 extends Phaser.Scene {
     }
 
     if (this.keyE.isDown && !this.cursors.left.isDown && !this.cursors.right.isDown) { // attack
-        simulateSwordAttack();
+        this.simulateSwordAttack();
     } else if (this.cursors.left.isDown && !this.keyE.isDown) { // left
-        this.player.setVelocityX(-playerSpeed);
+        this.player.setVelocityX(-this.playerSpeed);
         this.player.anims.play('left', true);
         this.currentAnimation = 'left';
     } else if (this.cursors.right.isDown && !this.keyE.isDown) { // right
-        this.player.setVelocityX(playerSpeed);
+        console.log(this.playerSpeed)
+        this.player.setVelocityX(this.playerSpeed);
         this.player.anims.play('right', true);
         this.currentAnimation = 'right';
     } else { // Si aucune touche de déplacement n'est enfoncée
         this.player.setVelocityX(0);
         if (this.currentAnimation === 'attack' || this.currentAnimation === 'jump') {
             this.player.once('animationcomplete', function () {
-                this.player.anims.play('turn');
+                self.player.anims.play('turn');
                 this.currentAnimation = 'turn';
             });
         } else {
@@ -172,7 +173,7 @@ export default class niveau1 extends Phaser.Scene {
         this.player.setVelocityY(-330);
         this.player.anims.play('jump', true);
         this.currentAnimation = 'jump';
-    } else if (this.cursors.up.isDown && player.body.onFloor() && (this.cursors.right.isDown || this.cursors.left.isDown)) {
+    } else if (this.cursors.up.isDown && this.player.body.onFloor() && (this.cursors.right.isDown || this.cursors.left.isDown)) {
         this.player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche et il saute un peu moins haut
     }
 
@@ -181,7 +182,6 @@ export default class niveau1 extends Phaser.Scene {
     this.groupe_ennemis.children.iterate(function iterateur(un_ennemi) {
         if (un_ennemi.direction == "gauche" && un_ennemi.body.blocked.down) {
         var coords = un_ennemi.getBottomLeft();
-        console.log(self.plateformes)
         var tuileSuivante = self.plateformes.getTileAtWorldXY(
             coords.x,
             coords.y + 10
@@ -210,27 +210,28 @@ export default class niveau1 extends Phaser.Scene {
   }
 
   playerEnemyCollision() {
-      pv -= 1;
-      healthText.setText('PV: ' + pv);
+      this.pv -= 1;
+      this.healthText.setText('PV: ' + pv);
 
-      if (healthText.text == "PV: 0"){
+      if (this.healthText.text == "PV: 0"){
           this.physics.pause();
           gameOver = true;
       }
   }
 
   simulateSwordAttack() {
-      player.anims.play('attack', true);
-      this.currentAnimation = 'attack';
-      const attackRange = new Phaser.Geom.Rectangle(player.x - 50, player.y - 10, 120, 20); // portée de l'attaque
+    const self = this;
+    this.player.anims.play('attack', true);
+    this.currentAnimation = 'attack';
+    const attackRange = new Phaser.Geom.Rectangle(this.player.x - 50, this.player.y - 10, 120, 20); // portée de l'attaque
 
-      player.once('animationcomplete', function () {
-          this.groupe_ennemis.children.entries.forEach(enemy => {
-              if (Phaser.Geom.Rectangle.ContainsPoint(attackRange, enemy.getCenter())) {
-                  dealDamageToEnemy(enemy);
-              }
-          });
-      });
+    this.player.once('animationcomplete', function () {
+        self.groupe_ennemis.children.entries.forEach(enemy => {
+            if (Phaser.Geom.Rectangle.ContainsPoint(attackRange, enemy.getCenter())) {
+                dealDamageToEnemy(enemy);
+            }
+        });
+    });
   }
 
   dealDamageToEnemy(enemy) {
@@ -254,7 +255,7 @@ export default class niveau1 extends Phaser.Scene {
               speedText.setText(''); // Effacez le texte lorsque l'animation est terminée
           }
       });
-      playerSpeed = playerSpeed + 20;
+      this.playerSpeed = this.playerSpeed + 20;
       boots.destroy(); 
   }
 
@@ -278,7 +279,7 @@ export default class niveau1 extends Phaser.Scene {
   }
 
   updateHealthText() {
-      healthText.setText(`PV: ${pv}`);
+      this.healthText.setText(`PV: ${pv}`);
   }
 
 }

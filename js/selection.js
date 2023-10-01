@@ -74,7 +74,7 @@ export default class selection extends Phaser.Scene {
 
         healthText = this.add.text(16, 16, `PV: ${pv}`, { fontSize: '25px', fill: '#FFFFFF' });
         healthText.setScrollFactor(0); // fixe le texte à l'écran
-
+        
         this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
             key: 'left',
             frames: this.anims.generateFrameNumbers('soldier', { start: 0, end: 6 }),
@@ -159,22 +159,22 @@ export default class selection extends Phaser.Scene {
     }
 }
 
-var config = { // configuration générale du jeu
-    // type: Phaser.AUTO,
-    // width: 900,
-    // height: 600,
-    // physics: {
-    //     default: 'arcade',
-    //     arcade: {
-    //         gravity: { y: 550 },
-    //         debug: false
-    //     }
-    // },
-    scene: {selection}
-};
+// var config = { // configuration générale du jeu
+//     // type: Phaser.AUTO,
+//     // width: 900,
+//     // height: 600,
+//     // physics: {
+//     //     default: 'arcade',
+//     //     arcade: {
+//     //         gravity: { y: 550 },
+//     //         debug: false
+//     //     }
+//     // },
+//     scene: {selection}
+// };
 
-var game = new Phaser.Game(config); // création et lancement du jeu à partir de la configuration config
-game.scene.start("selection"); // lancement de la scene selection
+// var game = new Phaser.Game(config); // création et lancement du jeu à partir de la configuration config
+// game.scene.start("selection"); // lancement de la scene selection
 
 
 
