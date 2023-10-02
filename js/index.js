@@ -1,5 +1,6 @@
 import selection from "./selection.js";
 import niveau1 from "./niveau1.js"; 
+import niveau2 from "./niveau2.js"; 
 
 var config = {
   type: Phaser.AUTO,
@@ -22,7 +23,7 @@ var config = {
   //         debug: false
   //     }
   // },
-  scene : [selection, niveau1]
+  scene : [selection, niveau1, niveau2]
 };
 
 var game = new Phaser.Game(config);

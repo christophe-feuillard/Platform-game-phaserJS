@@ -14,6 +14,7 @@ var plateforme;
 var playerSpeed = 140;
 var speedText = '';
 var plateformes;
+var plateformes2;
 var groupe_ennemis;
 
 export default class selection extends Phaser.Scene {
@@ -23,14 +24,16 @@ export default class selection extends Phaser.Scene {
 
     preload () {
         this.load.image("Phaser_tuilesdejeu", "assets/tuilesperso2.png");
+        this.load.image("Phaser_tuilesdejeu2", "assets/level2/tuiles.png");
         this.load.image('boots', 'assets/boots.png');
         this.load.image('potion', 'assets/potion.png');
         this.load.image('img_porte1', 'assets2/door1.png');
-        // this.load.image('img_porte2', 'assets2/door2.png');
+        this.load.image('img_porte2', 'assets2/door2.png');
         // this.load.image('img_porte3', 'assets2/door3.png'); 
 
         this.load.tilemapTiledJSON("mapSelection", "assets/mapSelection.json");
         this.load.tilemapTiledJSON("niveau1_1", "assets/map2.json"); 
+        this.load.tilemapTiledJSON("niveau2", "assets/level2/level2.json"); 
 
         this.load.spritesheet('soldier', 'assets/persosprite2.png', { frameWidth: 64, frameHeight: 48 });
         this.load.spritesheet('soldier_attack', 'assets/attack_sprite2.png', { frameWidth: 87, frameHeight: 48 });
@@ -55,6 +58,7 @@ export default class selection extends Phaser.Scene {
         );
 
         this.porte1 = this.physics.add.staticSprite(150, 430, "img_porte1");
+        this.porte2 = this.physics.add.staticSprite(250, 430, "img_porte2");
 
         player = this.physics.add.sprite(0, 340, 'soldier');
         player.setBounce(0);
@@ -126,6 +130,7 @@ export default class selection extends Phaser.Scene {
     update () {
         if (Phaser.Input.Keyboard.JustDown(this.cursors.space) == true) {
             if (this.physics.overlap(player, this.porte1)) this.scene.start("niveau1");
+            if (this.physics.overlap(player, this.porte2)) this.scene.start("niveau2");
         } 
 
         if (this.cursors.left.isDown) { // left
