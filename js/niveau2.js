@@ -25,27 +25,42 @@ export default class niveau2 extends Phaser.Scene {
         "plateforme_mobile"
     ); 
 
+    this.groupe_slime = this.physics.add.group();
+
+    const slime_point = carteDuNiveau.getObjectLayer("ennemis");   
+
+    slime_point.objects.forEach(point => {
+        if (point.name == "ennemi") {
+            var nouvel_ennemi = this.physics.add.sprite(point.x, point.y, "slime");
+            nouvel_ennemi.setBounce(0);
+            nouvel_ennemi.setCollideWorldBounds(true);
+            nouvel_ennemi.setScale(1.4);
+            this.physics.add.collider(nouvel_ennemi, this.plateformes2);
+            this.groupe_slime.add(nouvel_ennemi);
+        }
+    }); 
+
     this.plateforme_mobile.body.allowGravity = false;
     this.plateforme_mobile.body.immovable = true; 
 
     this.tween_mouvement = this.tweens.add({
-        targets: [this.plateforme_mobile],  // on applique le tween sur platefprme_mobile
-        paused: true, // de base le tween est en pause
-        ease: "Linear",  // concerne la vitesse de mouvement : linéaire ici 
-        duration: 2000,  // durée de l'animation pour monter 
-        yoyo: true,   // mode yoyo : une fois terminé on "rembobine" le déplacement 
-        x: "-=200",   // on va déplacer la plateforme de 300 pixel vers le haut par rapport a sa position
-        delay: 0,     // délai avant le début du tween une fois ce dernier activé
-        hold: 1000,   // délai avant le yoyo : temps qeu al plate-forme reste en haut
-        repeatDelay: 1000, // deléi avant la répétition : temps que la plate-forme reste en bas
-        repeat: -1 // répétition infinie 
+        targets: [this.plateforme_mobile],  
+        paused: true, 
+        ease: "Linear",  
+        duration: 2000, 
+        yoyo: true,   
+        x: "-=200",   
+        delay: 0,     
+        hold: 1000,  
+        repeatDelay: 1000, 
+        repeat: -1 
     });
 
     this.levier = this.physics.add.staticSprite(200, 515, "img_levier"); 
     this.levier.active = false; 
 
-    // this.player = this.physics.add.sprite(100, 500, 'soldier');
-    this.player = this.physics.add.sprite(1800, 300, 'soldier');
+    this.player = this.physics.add.sprite(100, 500, 'soldier');
+    // this.player = this.physics.add.sprite(1800, 300, 'soldier');
     this.player.setBounce(0);
     this.player.setCollideWorldBounds(true);
     this.player.body.onWorldBounds = true; 
@@ -94,19 +109,23 @@ export default class niveau2 extends Phaser.Scene {
 
   update () {
 
-    const self = this; // Stockez une référence à 'this' dans une variable 'self'
+    if (this.input.keyboard.checkDown(this.input.keyboard.addKey('R'), 250)) {
+        location.reload(); 
+    }
+
+    const self = this; 
 
     if (Phaser.Input.Keyboard.JustDown(this.cursors.space) == true) {
         if (this.physics.overlap(this.player, this.porte_retour)) { this.scene.start("selection"); }
         if (this.physics.overlap(this.player, this.levier) == true) {
-            if (this.levier.active == true) {         // si le levier etait activé, on le désactive et stoppe la plateforme
-                this.levier.active = false; // on désactive le this.levier
-                this.levier.flipX = false; // permet d'inverser l'image
-                this.tween_mouvement.pause();  // on stoppe le tween
-            } else {         // sinon :  on l'active et stoppe la plateforme
-                this.levier.active = true; // on active le this.levier 
-                this.levier.flipX = true; // on tourne l'image du levier
-                this.tween_mouvement.resume();  // on relance le tween
+            if (this.levier.active == true) {        
+                this.levier.active = false; 
+                this.levier.flipX = false; 
+                this.tween_mouvement.pause();  
+            } else {         
+                this.levier.active = true; 
+                this.levier.flipX = true; 
+                this.tween_mouvement.resume(); 
             }
         } 
     } 
@@ -155,6 +174,22 @@ export default class niveau2 extends Phaser.Scene {
         this.player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche et il saute un peu moins haut
     }
 
+    // this.groupe_slime.children.iterate(slime => {
+    //     const distanceToPlayerX = this.player.x - slime.x;
+
+    //     // Vous pouvez ajuster ces valeurs pour contrôler la hauteur du saut
+    //     const jumpHeight = 100; // Hauteur du saut maximale
+
+    //     // Calculez la nouvelle position Y du slime pour sauter vers le joueur
+    //     const newY = slime.y - jumpHeight;
+
+    //     // Définissez la nouvelle position Y du slime
+    //     slime.setY(newY);
+
+    //     // Déplacez le slime horizontalement vers le joueur
+    //     slime.setVelocityX(distanceToPlayerX > 0 ? 50 : -50);
+    // });
+
   }
 
   simulateSwordAttack() {
@@ -180,10 +215,10 @@ export default class niveau2 extends Phaser.Scene {
           targets: this.speedText,
           alpha: 0, // Le texte deviendra progressivement transparent
           y: this.speedText.y - 70, // Animation de montée
-          duration: 2000, // Durée de l'animation en millisecondes (2 secondes)
+          duration: 2000, 
           ease: 'Linear',
           onComplete: function () {
-              self.speedText.setText(''); // Effacez le texte lorsque l'animation est terminée
+              self.speedText.setText(''); 
           }
       });
       this.playerSpeed = this.playerSpeed + 20;

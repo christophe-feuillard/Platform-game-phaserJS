@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="20">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="11" nextobjectid="39">
  <editorsettings>
   <export target="map2.json" format="json"/>
  </editorsettings>
@@ -8130,6 +8130,36 @@
    <point/>
   </object>
   <object id="18" name="potion" x="2630" y="86">
+   <point/>
+  </object>
+  <object id="29" name="emerald" x="496" y="438.667">
+   <point/>
+  </object>
+  <object id="30" name="emerald" x="913.333" y="314.667">
+   <point/>
+  </object>
+  <object id="31" name="emerald" x="1058.67" y="242.667">
+   <point/>
+  </object>
+  <object id="32" name="emerald" x="1274.67" y="180">
+   <point/>
+  </object>
+  <object id="33" name="emerald" x="1453.33" y="584">
+   <point/>
+  </object>
+  <object id="34" name="emerald" x="2099" y="145">
+   <point/>
+  </object>
+  <object id="35" name="emerald" x="2704" y="84">
+   <point/>
+  </object>
+  <object id="36" name="emerald" x="2769" y="86">
+   <point/>
+  </object>
+  <object id="37" name="emerald" x="2158" y="229">
+   <point/>
+  </object>
+  <object id="38" name="emerald" x="1618" y="174">
    <point/>
   </object>
  </objectgroup>

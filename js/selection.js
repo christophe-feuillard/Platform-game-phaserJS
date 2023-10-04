@@ -16,9 +16,16 @@ var speedText = '';
 var plateformes;
 var plateformes2;
 var groupe_ennemis;
+var groupe_slime;
 var plateforme_mobile; 
 var levier; 
 var tween_mouvement; 
+var chronoText;
+var monTimer;
+var chrono = 0;  
+var score = 0;
+var scoreText = '';
+var inputText = '';
 
 export default class selection extends Phaser.Scene {
     constructor() {
@@ -30,11 +37,11 @@ export default class selection extends Phaser.Scene {
         this.load.image("Phaser_tuilesdejeu2", "assets/TX Tileset Ground.png");
         this.load.image("img_levier", "assets/level2/levier.png"); 
         this.load.image("plateforme_mobile", "assets/level2/moving_ground.png"); 
+        this.load.image("emerald", "assets/emerald.png"); 
         this.load.image('boots', 'assets/boots.png');
         this.load.image('potion', 'assets/potion.png');
         this.load.image('img_porte1', 'assets/door1.png');
         this.load.image('img_porte2', 'assets/door2.png');
-        // this.load.image('img_porte3', 'assets/door3.png'); 
 
         this.load.tilemapTiledJSON("mapSelection", "assets/mapSelection.json");
         this.load.tilemapTiledJSON("niveau1_1", "assets/map2.json"); 
@@ -44,10 +51,23 @@ export default class selection extends Phaser.Scene {
         this.load.spritesheet('soldier_attack', 'assets/attack_sprite2.png', { frameWidth: 87, frameHeight: 48 });
         this.load.spritesheet('soldier_jump', 'assets/jump_sprite.png', { frameWidth: 86, frameHeight: 60 });
         this.load.spritesheet('enemy', 'assets/enemy.png', { frameWidth: 42, frameHeight: 49 });
-        this.load.spritesheet('enemy', 'assets/level2/slime_idle1.png', { frameWidth: 42, frameHeight: 49 });
+        this.load.spritesheet('slime', 'assets/level2/slime_idle1.png', { frameWidth: 42, frameHeight: 49 });
     }
 
     create () {
+        monTimer = this.time.addEvent({
+            delay: 1000,
+            callback: this.compteUneSeconde,
+            callbackScope: this,
+            loop: true
+        });  
+
+        chronoText = this.add.text(16, 100, "Chrono: 0", {
+            fontSize: "24px",
+            fill: "#FFFFFF"
+        });
+        chronoText.setScrollFactor(0); 
+
         const mapSelection = this.add.tilemap("mapSelection");
 
         const tileset = mapSelection.addTilesetImage(
@@ -75,8 +95,6 @@ export default class selection extends Phaser.Scene {
         plateforme.setCollisionByProperty({ collides: true });
         plateforme.setCollisionByExclusion([-1]);
 
-        // this.physics.world.setBounds(0, 0, 640, 480);  // redimentionnement du monde avec les dimensions calculées via tiled
-        // this.cameras.main.setBounds(0, 0, 640, 480); //  ajout du champs de la caméra de taille identique à celle du monde
         this.physics.world.setBounds(0, 0, 3200, 640);  // redimentionnement du monde avec les dimensions calculées via tiled
         this.cameras.main.setBounds(0, 0, 3200, 640); //  ajout du champs de la caméra de taille identique à celle du monde
         this.cameras.main.startFollow(player); // ancrage de la caméra sur le joueur
@@ -87,6 +105,12 @@ export default class selection extends Phaser.Scene {
 
         healthText = this.add.text(16, 16, `PV: ${pv}`, { fontSize: '25px', fill: '#FFFFFF' });
         healthText.setScrollFactor(0); // fixe le texte à l'écran
+
+        inputText = this.add.text(
+            490, 16, 'R : Recharge le niveau \nE : Attaque\nArrow : Se déplacer\nEspace: Utiliser les portes', 
+            { fontSize: '18px', fill: '#FFFFFF' }
+        );
+        inputText.setScrollFactor(0); // fixe le texte à l'écran
         
         this.anims.create({ // les animations sont disponibles globalement pour tous les objets de jeu
             key: 'left',
@@ -134,6 +158,12 @@ export default class selection extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
+
+        this.anims.create({
+            key: 'turn_slime',
+            frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 1 }),
+            frameRate: 10,
+        });
     }
 
     update () {
@@ -171,4 +201,9 @@ export default class selection extends Phaser.Scene {
             player.setVelocityY(-300); // pas d'anim de jump si le joueur marche a droite ou a gauche et il saute un peu moins haut
         }
     }
+
+    compteUneSeconde () {
+        chrono = chrono + 1; // on incremente le chronometre d'une unite
+    }  
+
 }
