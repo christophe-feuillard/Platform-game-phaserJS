@@ -45,6 +45,7 @@ export default class niveau1 extends Phaser.Scene {
         }); 
 
         this.player = this.physics.add.sprite(100, 440, 'soldier');
+        // this.player = this.physics.add.sprite(3000, 440, 'soldier');
         this.player.setBounce(0);
         this.player.setCollideWorldBounds(true);
         this.player.body.onWorldBounds = true; 
@@ -131,7 +132,7 @@ export default class niveau1 extends Phaser.Scene {
 
         if (Phaser.Input.Keyboard.JustDown(this.cursors.space) == true) {
             if (this.physics.overlap(this.player, this.porte_retour)) {
-                this.scene.start("selection");
+                this.scene.start("niveau2");
             }
         } 
 

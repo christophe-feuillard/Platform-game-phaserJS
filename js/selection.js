@@ -35,6 +35,7 @@ export default class selection extends Phaser.Scene {
     preload () {
         this.load.image("Phaser_tuilesdejeu", "assets/tuilesperso2.png");
         this.load.image("Phaser_tuilesdejeu2", "assets/TX Tileset Ground.png");
+        this.load.image("Phaser_tuilesdejeu2_sky", "assets/level2/backgroundlvl2.png");
         this.load.image("img_levier", "assets/level2/levier.png"); 
         this.load.image("plateforme_mobile", "assets/level2/moving_ground.png"); 
         this.load.image("emerald", "assets/emerald.png"); 
